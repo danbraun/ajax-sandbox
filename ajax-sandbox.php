@@ -14,7 +14,11 @@ if ( ! defined( 'WPINC' ) ) {
 add_action( 'plugins_loaded', __NAMESPACE__ . "\\enqueue_plugin_scripts" );
 
 function enqueue_plugin_scripts() {
-    wp_enqueue_script( 'plugin-script/js', plugin_dir_url(__FILE__) . 'assets/js/app.js', null, '1.0', true );
+	$admin_ajax_php = admin_url( 'admin-ajax.php' );
+	wp_enqueue_script( 'plugin-script/js', plugin_dir_url(__FILE__) . 'assets/js/app.js', null, '1.0', true );
+	wp_localize_script('plugin-script/js', 'localized_data', array(
+		'ajaxurl' => admin_url('admin-ajax.php')
+	 ));
 }
 
 add_action( 'admin_menu', __NAMESPACE__ . '\\add_admin_menu' );
@@ -33,4 +37,13 @@ function add_admin_menu() {
 
 function ajax_sandbox_content() {
     echo '<div ID="js-content"></div>';
+}
+
+add_action( 'wp_ajax_respond_please', __NAMESPACE__ . '\\ajax_callback');
+add_action( 'wp_ajax_nopriv_respond_please', __NAMESPACE__ . '\\ajax_callback');
+function ajax_callback() {
+	$arr = [
+		'text_msg' => $_POST['search_query_text']
+	];
+	wp_send_json( $arr );
 }
