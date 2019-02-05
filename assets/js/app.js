@@ -1,24 +1,16 @@
 (function() {
     
     const root = document.querySelector('#js-content');
-    const heading = document.createElement('h1');
-    heading.textContent = 'AJAX SANDBOX';
-    root.appendChild(heading);
-
-    const searchBox = document.createElement('input');
-    root.appendChild(searchBox);
-
-    const button = document.createElement('button');
-    button.textContent = 'Submit'
-    root.appendChild(button);
-
-    const returnText = document.createElement('pre');
-    root.appendChild(returnText);
-
+    const searchBox = root.querySelector('.search-box');
+    const button = root.querySelector('.submit-search');
+    const returnText = root.querySelector('.return-text');
+    
+    
     const localizedData = localized_data;
     const ajaxUrl = localizedData.ajaxurl;
     
-    button.onclick = () => {
+    button.onclick = (e) => {
+        e.preventDefault();
         requestAjax();
     }
     
@@ -43,6 +35,9 @@
         })
     }
     function updateDOM(data) {
-        returnText.textContent = `You searched: ${data.text_msg}`;
+        console.log(data)
+        returnText.classList.remove('is-hidden');
+        returnText.textContent = `Records Found: ${data.posts.post_count}`;
+        returnText.textContent += `Posts: ${data.posts}`;
     }
 })()

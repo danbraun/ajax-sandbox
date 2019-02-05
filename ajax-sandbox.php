@@ -11,10 +11,21 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-add_action( 'plugins_loaded', __NAMESPACE__ . "\\enqueue_plugin_scripts" );
+/**
+ * Post types and taxonomies
+ */
+include_once('post-types/child.php');
+include_once('taxonomies/parent.php');
 
-function enqueue_plugin_scripts() {
+add_action( 'admin_enqueue_scripts', __NAMESPACE__ . "\\enqueue_plugin_scripts" );
+
+function enqueue_plugin_scripts( $hook ) {
+
+	if( $hook != 'toplevel_page_ajax-sandbox-admin-menu' ) {
+		return;
+	}
 	$admin_ajax_php = admin_url( 'admin-ajax.php' );
+	wp_enqueue_style( 'bulma/css', plugin_dir_url(__FILE__) . 'assets/css/bulma.min.css', null, '0.7.2', 'all' );
 	wp_enqueue_script( 'plugin-script/js', plugin_dir_url(__FILE__) . 'assets/js/app.js', null, '1.0', true );
 	wp_localize_script('plugin-script/js', 'localized_data', array(
 		'ajaxurl' => admin_url('admin-ajax.php')
@@ -36,14 +47,43 @@ function add_admin_menu() {
 }
 
 function ajax_sandbox_content() {
-    echo '<div ID="js-content"></div>';
+   ?>
+	<div id="js-content" class="container is-fluid">
+	<h1 class="title">AJAX SANDBOX</h1>
+	<div class="columns">
+	<section class="column">
+		<form>
+			<div class="field">
+				<label class="label">Enter Search:</label>
+				<div class="control">
+					<input class="search-box is-medium input" type="text">
+				</div>
+			</div>
+			<div class="field">
+					<div class="control">
+						<button class="button submit-search">Submit Search</button>
+					</div>
+				</div>
+		</form>
+	</section>
+	<section class="column is-two-thirds">
+		<div class="return-text notification is-hidden"></div>
+	</section>
+	</div>
+	</div>	
+   <?php
 }
 
 add_action( 'wp_ajax_respond_please', __NAMESPACE__ . '\\ajax_callback');
 add_action( 'wp_ajax_nopriv_respond_please', __NAMESPACE__ . '\\ajax_callback');
 function ajax_callback() {
+	$posts = new \WP_Query( array(
+		'post-type' => 'child',
+		'posts-per-page' => -1,
+		's' => $_POST['search_query_text']
+	));
 	$arr = [
-		'text_msg' => $_POST['search_query_text']
-	];
+		'posts' => $posts
+		];
 	wp_send_json( $arr );
 }
