@@ -16,6 +16,7 @@ if ( ! defined( 'WPINC' ) ) {
  */
 include_once('post-types/child.php');
 include_once('taxonomies/parent.php');
+include_once('taxonomies/school.php');
 
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . "\\enqueue_plugin_scripts" );
 
@@ -86,4 +87,48 @@ function ajax_callback() {
 		'posts' => $posts
 		];
 	wp_send_json( $arr );
+}
+
+/**
+ * Column editing
+ * @link https://www.smashingmagazine.com/2017/12/customizing-admin-columns-wordpress/
+ */
+add_filter( 'manage_child_posts_columns', __NAMESPACE__ . '\\daniel_filter_posts_columns' );
+function daniel_filter_posts_columns( $columns ) {
+	$columns = array(
+		'cb' => $columns['cb'],
+		'title' => __( 'Title' ),
+		'school' => __( 'School' ),
+	  );
+  return $columns;
+}
+
+add_action( 'manage_child_posts_custom_column', __NAMESPACE__ . '\\daniel_child_column', 10, 2);
+function daniel_child_column( $column, $post_id ) {
+  // School column
+  if ( 'school' === $column ) {
+	// make sure that ACF tax field is set to return object not id
+	$term_obj = get_field( 'school' );
+    echo $term_obj->name;
+  }
+}
+/**
+ * Sorting for school
+ */
+add_filter( 'manage_edit-child_sortable_columns', __NAMESPACE__ . '\\daniel_child_sortable_columns');
+function daniel_child_sortable_columns( $columns ) {
+  $columns['school'] = 'school_being_attended';
+  return $columns;
+}
+add_action( 'pre_get_posts', __NAMESPACE__ . '\\daniel_posts_orderby' );
+function daniel_posts_orderby( $query ) {
+  if( ! is_admin() || ! $query->is_main_query() ) {
+    return;
+  }
+
+  if ( 'school_being_attended' === $query->get( 'orderby') ) {
+    $query->set( 'orderby', 'meta_value' );
+    $query->set( 'meta_key', 'school_being_attended' );
+    $query->set( 'meta_type', 'alpha' );
+  }
 }
